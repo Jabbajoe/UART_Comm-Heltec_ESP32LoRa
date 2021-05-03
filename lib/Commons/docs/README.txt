@@ -1,1 +1,0 @@
-Biblioteca comum a todos ESP 32 LoRa Wifi V2
