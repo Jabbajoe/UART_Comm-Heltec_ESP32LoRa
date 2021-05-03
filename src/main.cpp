@@ -42,7 +42,7 @@ void setup() {
   drawProgressBar();
 }
 
-// Loop
+// Loop 
 void loop() {
 
     if (Serial1.available()) {
