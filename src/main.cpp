@@ -1,33 +1,47 @@
-#include <Arduino.h>
-#include <heltec.h> 
+#include <heltec.h>
+#include <SPI.h>
 
 #include "basicfunctions.h"
 
 // If debug information needed
-#define __DEBUG__
+//#define __DEBUG__
 
 // For debug purpose
 #ifdef __DEBUG__
-  int msg_pre1 = 0;
-  int msg_pre2 = 0;
-  int msg_pos = 0;
-  int DEBUGCOUNT = 0;
-  int printflag = 0;
+  // TO DO
 #endif
+
+// Frequência do rádio - exemplo : 433E6, 868E6, 915E6
+#define BAND 893000000 // 893 MHz  aka  893*10^6 Hz  aka  893E6
+
+// Contador que irá servir como o dados que o Slave irá enviar
+int count = 0;
+
+//Constante para informar ao Slave que queremos os dados
+const String GETDATA = "getdata";
+//Constante que o Slave retorna junto com os dados para o Master
+const String SETDATA = "setdata=";
+
+
+/**
+ * @brief Função onde se faz a leitura dos dados que queira enviar
+ * 
+ * 
+ */
+String readData(){
+  return String(count++);
+}
 
 
 // Setup
 void setup() {
-  Heltec.begin(true /*DisplayEnable Enable*/, false /*LoRa Disable*/, true /*Serial Enable*/);
+  // Initialize ESP32
+  // Heltec.begin(Display Enable, LoRa Enable, Serial Enable, PABOOST, BAND)
+  Heltec.begin(true, true, true, true, BAND);
+
+  // Initial configuration display
   Heltec.display->flipScreenVertically();
   Heltec.display->setFont(ArialMT_Plain_10);
-
-  // Configuring UARTs
-  Serial.begin(115200); // UART 0
-  Serial1.begin(115200, SERIAL_8N1, 2, 17); // UART 1
-
-  // Reserve 200 bytes for the InputString:
-  //inputString.reserve(200);
 
   // Clear screen
   Heltec.display->clear();
@@ -40,47 +54,44 @@ void setup() {
 
   // Show progress bar in screen
   drawProgressBar();
+
+  // Ativa o crc do LoRa
+  LoRa.enableCrc();
+
+  // Ativa o recebimento de pacotes LoRa
+  LoRa.receive();
 }
 
 // Loop  
 void loop() {
+  // Tenta ler o pacote
+  int packetSize = LoRa.parsePacket();
 
-    if (Serial1.available()) {
-                                                                  #ifdef __DEBUG__
-                                                                    msg_pre1 = Serial1.available();
-                                                                    Serial.print("msg_pre: ");
-                                                                    Serial.println(msg_pre1);
-                                                                    msg_pre2 = 0;
-                                                                    Serial.println("AHAA!!!");
-                                                                    msg_pre2 = Serial1.available();
+  //Verifica se o pacote possui a quantidade de caracteres que esperamos
+  if (packetSize == GETDATA.length()) {
+    String received = "";
 
-                                                                    // Receive data from UART 1
-                                                                    DEBUGCOUNT = Serial1receive();
-                                                                  #endif
-
-                                                                  #ifndef __DEBUG__
-      // Receive data from UART 1
-      // (void) used to ignore returned value
-      (void) Serial1receive();
-                                                                  #endif
-
-                                                                  #ifdef __DEBUG__
-                                                                    msg_pos = Serial1.available();
-                                                                    printflag = 1;
-                                                                  #endif
+    //Armazena os dados do pacote em uma string
+    while(LoRa.available()) {
+      received += (char) LoRa.read();
     }
 
-    // print on ESP32 screen
-    PrintOnScreen(buffer1);
-                                                                  #ifdef __DEBUG__
-                                                                    if(printflag){
-                                                                      Serial.print("msg_pre2: ");
-                                                                      Serial.println(msg_pre2);
-                                                                      Serial.print("DEBUG COUNT: ");
-                                                                      Serial.println(DEBUGCOUNT);
-                                                                      Serial.print("msg_pos: ");
-                                                                      Serial.println(msg_pos);
-                                                                    }
-                                                                    printflag = 0;
-                                                                  #endif
+    if(received.equals(GETDATA)) {
+      //Simula a leitura dos dados
+      String data = readData();
+      Serial.println("Criando pacote para envio");
+
+      //Cria o pacote para envio
+      LoRa.beginPacket();
+      LoRa.print(SETDATA + data);
+
+      //Finaliza e envia o pacote
+      LoRa.endPacket();
+
+      //Mostra no display
+      Heltec.display->clear();
+      Heltec.display->drawString(0, 0, "Enviou: " + String(data));
+      Heltec.display->display();
+    }
+  }
 }
