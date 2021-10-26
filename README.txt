@@ -9,7 +9,13 @@ HARDWARE:
         LoRa band: 868 MHz (nominal)
         Schematics: https://resource.heltec.cn/download/WiFi_LoRa_32/V2.1/WIFI_LoRa_32_V2.1(868-915).PDF
         Site: https://heltec.org/project/wifi-lora-32/
-        
+        Docs:
+              https://heltec-automation-docs.readthedocs.io/en/latest/esp32/distance_test.html
+              https://heltec.org/project/wifi-lora-32/
+              https://resource.heltec.cn/download/WiFi_LoRa_32/V2/WIFI_LoRa_32_V2(868-915).PDF
+              https://resource.heltec.cn/download/WiFi_LoRa_32/WIFI_LoRa_32_V2.pdf
+              https://github.com/HelTecAutomation/Heltec_ESP32
+
 
 ***********
 SOFTWARE:
